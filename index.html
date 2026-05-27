@@ -1437,6 +1437,8 @@
       <button class="btn-export" onclick="window.print()">🖨 Tlačiť / PDF</button>
       <button class="btn-export" onclick="exportData()" style="background:var(--black);color:var(--gold);border-color:var(--gold-dark);">⬇ Export dát</button>
       <button class="btn-export" onclick="openImport()" style="background:var(--gold);color:var(--black);border-color:var(--gold);">⬆ Import dát</button>
+      <button class="btn-export" onclick="saveToCloud()" style="background:#1a5c8a;color:white;border-color:#1a5c8a;">☁️ Uložiť do cloudu</button>
+      <button class="btn-export" onclick="loadFromCloud()" style="background:#2E7D52;color:white;border-color:#2E7D52;">⬇️ Načítať z cloudu</button>
     </div>
   </div>
 
@@ -2382,6 +2384,70 @@
   renderRecurrings();
   renderCostSummary();
   updateDatalist();
+
+  // ===== CLOUD SYNC =====
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvI0ZU8hEW7Yoa1g1LVrl7aoG4gWufYvRVRhlZNgRc8PlyvvZQ7j81vXaGabglckvg/exec';
+
+  async function saveToCloud() {
+    showNotif('☁️ Ukladám do cloudu...');
+    try {
+      const tables = [
+        { table: 'transactions', rows: transactions },
+        { table: 'recurrings', rows: recurrings },
+        { table: 'todos', rows: todos }
+      ];
+      for (const t of tables) {
+        const rowData = t.rows.map(r => [JSON.stringify(r)]);
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'save', table: t.table, rows: rowData })
+        });
+      }
+      showNotif('✅ Uložené do cloudu!');
+    } catch(e) {
+      showNotif('❌ Chyba pri ukladaní: ' + e.message);
+    }
+  }
+
+  function loadFromCloud() {
+    showNotif('⬇️ Načítavam z cloudu...');
+    let loaded = 0;
+    const tables = ['transactions', 'recurrings', 'todos'];
+    tables.forEach(table => {
+      const cbName = 'cb_' + table + '_' + Date.now();
+      window[cbName] = function(data) {
+        delete window[cbName];
+        try {
+          const rows = (data.rows || []).map(r => JSON.parse(r[0]));
+          if (table === 'transactions') {
+            transactions = rows;
+            localStorage.setItem('lexaTransactions', JSON.stringify(transactions));
+          } else if (table === 'recurrings') {
+            recurrings = rows;
+            localStorage.setItem('lexaRecurrings', JSON.stringify(recurrings));
+          } else if (table === 'todos') {
+            todos = rows;
+            localStorage.setItem('lexaTodos', JSON.stringify(todos));
+          }
+        } catch(e) {}
+        loaded++;
+        if (loaded === tables.length) {
+          renderAll();
+          renderLoans();
+          renderTodos();
+          renderRecurrings();
+          renderCostSummary();
+          showNotif('✅ Dáta načítané z cloudu!');
+        }
+      };
+      const s = document.createElement('script');
+      s.src = SCRIPT_URL + '?table=' + table + '&callback=' + cbName;
+      s.onerror = () => { loaded++; };
+      document.head.appendChild(s);
+    });
+  }
 
 </script>
 </body>
