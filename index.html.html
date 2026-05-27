@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lexa & Svet — Transparentná Peňaženka</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dark: #9A7A30;
+    --black: #0D0D0D;
+    --dark: #1A1A1A;
+    --white: #FFFFFF;
+    --off-white: #F8F6F1;
+    --gray: #888;
+    --border: rgba(201,168,76,0.25);
+    --income-color: #2E7D52;
+    --expense-color: #8B2020;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Montserrat', sans-serif; background: var(--off-white); color: var(--black); min-height: 100vh; }
+
+  header {
+    background: var(--black);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gold-dark);
+  }
+  .logo-area { display: flex; align-items: center; gap: 18px; }
+  .logo-svg { width: 60px; height: 60px; }
+  .logo-text h1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--white); letter-spacing: 3px; text-transform: uppercase; }
+  .logo-text span { font-size: 10px; color: var(--gold); letter-spacing: 4px; text-transform: uppercase; display: block; margin-top: 2px; }
+  .gold-separator { width: 40px; height: 2px; background: linear-gradient(90deg, var(--gold-dark), var(--gold-light)); margin: 4px 0 0 0; }
+  .header-right { text-align: right; }
+  .header-right p { font-size: 11px; color: var(--gray); letter-spacing: 1px; text-transform: uppercase; }
+  .header-right strong { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--gold); display: block; margin-top: 2px; }
+
+  .summary-bar { background: var(--black); padding: 0 40px 30px; display: flex; gap: 20px; }
+  .balance-card { flex: 1; border: 1px solid var(--border); border-radius: 4px; padding: 18px 22px; position: relative; overflow: hidden; }
+  .balance-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .balance-card.total::before { background: linear-gradient(90deg, var(--gold-dark), var(--gold-light), var(--gold-dark)); }
+  .balance-card.income::before { background: #2E7D52; }
+  .balance-card.expense::before { background: #8B2020; }
+  .balance-card label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gray); display: block; margin-bottom: 8px; }
+  .balance-card .amount { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 600; }
+  .balance-card.total .amount { color: var(--gold-light); }
+  .balance-card.income .amount { color: #5DBE8A; }
+  .balance-card.expense .amount { color: #E05050; }
+  .balance-card .count { font-size: 10px; color: var(--gray); margin-top: 4px; }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 30px 40px; }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600;
+    color: var(--black); letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title .gold-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--gold), transparent); }
+
+  .form-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 160px auto;
+    gap: 12px; align-items: end;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 4px; padding: 24px; margin-bottom: 30px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); font-weight: 500; }
+  .form-group input, .form-group select {
+    border: 1px solid #E0D9CC; border-radius: 3px; padding: 10px 14px;
+    font-family: 'Montserrat', sans-serif; font-size: 13px; color: var(--black);
+    background: var(--off-white); outline: none; transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--gold); background: var(--white); }
+
+  .type-toggle { display: flex; border: 1px solid #E0D9CC; border-radius: 3px; overflow: hidden; }
+  .type-toggle button {
+    flex: 1; padding: 10px 12px; border: none; background: var(--off-white);
+    font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 500;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.2s; color: var(--gray);
+  }
+  .type-toggle button.active-income { background: var(--income-color); color: white; }
+  .type-toggle button.active-expense { background: var(--expense-color); color: white; }
+
+  .btn-add {
+    background: var(--black); color: var(--gold); border: 1px solid var(--gold-dark);
+    border-radius: 3px; padding: 10px 22px; font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap; height: 42px;
+  }
+  .btn-add:hover { background: var(--gold); color: var(--black); }
+
+  /* TABLE */
+  .table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; box-shadow: 0 2px 20px rgba(0,0,0,0.05); margin-bottom: 30px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--black); }
+  thead th { padding: 13px 16px; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); font-weight: 500; text-align: left; }
+  tbody tr { border-bottom: 1px solid #F0EAE0; transition: background 0.15s; }
+  tbody tr:hover { background: #FFFBF3; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 13px 16px; font-size: 13px; color: var(--black); }
+
+  .badge-income { display: inline-block; background: #E8F5EE; color: var(--income-color); font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: 2px; border: 1px solid #C3E6D4; }
+  .badge-expense { display: inline-block; background: #FBE8E8; color: var(--expense-color); font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: 2px; border: 1px solid #F0C0C0; }
+  .amount-income { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--income-color); }
+  .amount-expense { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--expense-color); }
+  .btn-delete { background: none; border: 1px solid #E0D9CC; border-radius: 3px; padding: 4px 10px; font-size: 11px; color: var(--gray); cursor: pointer; transition: all 0.2s; }
+  .btn-delete:hover { background: #FBE8E8; border-color: var(--expense-color); color: var(--expense-color); }
+  .empty-state { text-align: center; padding: 50px; color: var(--gray); }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; letter-spacing: 1px; }
+  .date-cell { color: var(--gray); font-size: 11px; }
+  .name-cell { font-weight: 500; }
+  .note-cell { color: var(--gray); font-size: 12px; font-style: italic; }
+  .running-balance { font-size: 11px; color: var(--gray); }
+
+  /* SUMÁR GRID */
+  .sumar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .sumar-card { background: var(--white); border: 1px solid var(--border); border-radius: 4px; padding: 24px; box-shadow: 0 2px 20px rgba(0,0,0,0.05); }
+  .sumar-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--black); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .sumar-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F5F0E8; }
+  .sumar-row:last-child { border-bottom: none; }
+  .sumar-name { font-weight: 500; font-size: 13px; }
+  .sumar-count { font-size: 10px; color: var(--gray); margin-top: 2px; }
+  .sumar-amount-income { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--income-color); }
+  .sumar-amount-expense { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--expense-color); }
+
+  /* REPORT + FILTER */
+  .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .report-card { background: var(--white); border: 1px solid var(--border); border-radius: 4px; padding: 24px; box-shadow: 0 2px 20px rgba(0,0,0,0.05); }
+  .report-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: var(--black); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .report-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F5F0E8; font-size: 12px; }
+  .report-row:last-child { border-bottom: none; }
+  .report-row .label { color: var(--gray); }
+  .report-row .val-income { color: var(--income-color); font-weight: 600; font-family: 'Cormorant Garamond', serif; font-size: 15px; }
+  .report-row .val-expense { color: var(--expense-color); font-weight: 600; font-family: 'Cormorant Garamond', serif; font-size: 15px; }
+  .report-row .val-gold { color: var(--gold-dark); font-weight: 600; font-family: 'Cormorant Garamond', serif; font-size: 15px; }
+
+  /* FILTER TOOLBAR */
+  .filter-section { background: var(--white); border: 1px solid var(--border); border-radius: 4px; padding: 20px 24px; margin-bottom: 30px; box-shadow: 0 2px 20px rgba(0,0,0,0.05); }
+  .filter-inner { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .filter-group { display: flex; align-items: center; gap: 8px; }
+  .filter-group label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); white-space: nowrap; }
+  .filter-group select, .filter-group input { border: 1px solid #E0D9CC; border-radius: 3px; padding: 7px 12px; font-family: 'Montserrat', sans-serif; font-size: 12px; color: var(--black); background: var(--off-white); outline: none; }
+  .filter-group select:focus, .filter-group input:focus { border-color: var(--gold); }
+  .btn-export { background: var(--white); color: var(--black); border: 1px solid var(--gold-dark); border-radius: 3px; padding: 8px 18px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .btn-export:hover { background: var(--gold); border-color: var(--gold); color: var(--black); }
+  .btn-clear { background: none; border: 1px solid #E0D9CC; border-radius: 3px; padding: 8px 14px; font-family: 'Montserrat', sans-serif; font-size: 10px; color: var(--gray); cursor: pointer; }
+  .btn-clear:hover { border-color: var(--gray); }
+
+  .notif { position: fixed; top: 20px; right: 20px; background: var(--black); color: var(--gold); border: 1px solid var(--gold-dark); border-radius: 4px; padding: 14px 22px; font-size: 12px; letter-spacing: 1px; z-index: 999; opacity: 0; transform: translateY(-10px); transition: all 0.3s; pointer-events: none; }
+  .notif.show { opacity: 1; transform: translateY(0); }
+
+
+  /* PRAVIDELNÉ PLATBY */
+  .recurring-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 30px; }
+  .rec-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: 4px;
+    padding: 20px; box-shadow: 0 2px 20px rgba(0,0,0,0.05); position: relative;
+    transition: box-shadow 0.2s;
+  }
+  .rec-card:hover { box-shadow: 0 4px 30px rgba(201,168,76,0.15); }
+  .rec-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--gold-dark), var(--gold-light)); border-radius: 4px 4px 0 0; }
+  .rec-card.due-soon::before { background: #E05050; }
+  .rec-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .rec-card-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--black); }
+  .rec-badge { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; background: #F5F0E0; color: var(--gold-dark); border: 1px solid var(--border); }
+  .rec-badge.due { background: #FBE8E8; color: var(--expense-color); border-color: #F0C0C0; }
+  .rec-amount { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: var(--expense-color); margin-bottom: 8px; }
+  .rec-meta { font-size: 11px; color: var(--gray); margin-bottom: 4px; }
+  .rec-meta span { color: var(--black); font-weight: 500; }
+  .rec-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .btn-pay-now {
+    flex: 1; background: var(--black); color: var(--gold); border: 1px solid var(--gold-dark);
+    border-radius: 3px; padding: 8px 12px; font-family: 'Montserrat', sans-serif;
+    font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-pay-now:hover { background: var(--gold); color: var(--black); }
+  .btn-rec-edit { background: none; border: 1px solid #E0D9CC; border-radius: 3px; padding: 8px 12px; font-size: 11px; color: var(--gray); cursor: pointer; transition: all 0.2s; }
+  .btn-rec-edit:hover { border-color: var(--gold); color: var(--gold-dark); }
+  .btn-rec-delete { background: none; border: 1px solid #E0D9CC; border-radius: 3px; padding: 8px 10px; font-size: 11px; color: var(--gray); cursor: pointer; transition: all 0.2s; }
+  .btn-rec-delete:hover { background: #FBE8E8; border-color: var(--expense-color); color: var(--expense-color); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 32px; width: 480px; max-width: 95vw; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold-dark), var(--gold-light), var(--gold-dark)); border-radius: 6px 6px 0 0; }
+  .modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; color: var(--black); }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .modal-grid .full { grid-column: 1 / -1; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+  .btn-modal-save { background: var(--black); color: var(--gold); border: 1px solid var(--gold-dark); border-radius: 3px; padding: 10px 24px; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .btn-modal-save:hover { background: var(--gold); color: var(--black); }
+  .btn-modal-cancel { background: none; border: 1px solid #E0D9CC; border-radius: 3px; padding: 10px 20px; font-family: 'Montserrat', sans-serif; font-size: 11px; color: var(--gray); cursor: pointer; }
+  .rec-empty { text-align: center; padding: 40px; color: var(--gray); font-size: 13px; }
+
+
+  /* MESAČNÝ SÚHRN NÁKLADOV */
+  .cost-summary {
+    background: var(--black);
+    border-radius: 6px;
+    padding: 36px 40px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cost-summary::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-light), var(--gold-dark));
+  }
+  .cost-summary::after {
+    content: 'NÁKLADY';
+    position: absolute;
+    right: 30px; top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 100px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.03);
+    letter-spacing: 10px;
+    pointer-events: none;
+  }
+  .cost-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+  }
+  .cost-summary-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 400;
+  }
+  .cost-summary-header p {
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 1px;
+  }
+  .cost-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+  .cost-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+  }
+  .cost-item:last-child { border-bottom: none; }
+  .cost-item-left { display: flex; align-items: center; gap: 14px; }
+  .cost-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+  .cost-item-name {
+    font-size: 14px;
+    color: var(--white);
+    font-weight: 400;
+  }
+  .cost-item-period {
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-left: 4px;
+  }
+  .cost-item-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+  .cost-item-monthly {
+    font-size: 10px;
+    color: var(--gray);
+    text-align: right;
+    margin-top: 1px;
+  }
+  .cost-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dark), transparent);
+    margin: 4px 0 24px;
+  }
+  .cost-totals {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: rgba(201,168,76,0.15);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .cost-total-block {
+    background: rgba(255,255,255,0.04);
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .cost-total-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 8px;
+  }
+  .cost-total-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+  .cost-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--gray);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  @media print {
+    body { background: white; }
+    header, .summary-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
+    .form-section { display: none !important; }
+    .filter-section { display: none !important; }
+    main { padding: 20px; }
+    .table-wrap, .sumar-card, .report-card { box-shadow: none; }
+  }
+
+
+  /* ===== FIX HORIZONTAL SCROLL ===== */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  * { max-width: 100%; }
+
+  @media (max-width: 768px) {
+    .table-wrap { overflow-x: hidden; }
+    table { min-width: unset; width: 100%; display: block; }
+    thead { display: none; }
+    tbody { display: block; width: 100%; }
+    tbody tr {
+      display: flex;
+      flex-direction: column;
+      padding: 14px 16px;
+      border-bottom: 1px solid #F0EAE0;
+      gap: 4px;
+    }
+    tbody td {
+      display: block;
+      padding: 0;
+      font-size: 12px;
+      border: none;
+    }
+    tbody td[style*="text-align:right"] {
+      text-align: left !important;
+    }
+    .amount-income, .amount-expense { font-size: 18px; }
+    .running-balance { font-size: 11px; color: var(--gray); }
+    .btn-delete { margin-top: 6px; }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+    .form-grid .form-group:nth-child(1),
+    .form-grid .form-group:nth-child(4) {
+      grid-column: 1;
+    }
+
+    .cost-totals { grid-template-columns: 1fr; }
+    .sumar-grid { grid-template-columns: 1fr; }
+    .report-grid { grid-template-columns: 1fr; }
+    .recurring-grid { grid-template-columns: 1fr; }
+    .filter-inner { flex-direction: column; }
+    .filter-group { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .filter-group select, .filter-group input { width: 100%; }
+    .btn-export, .btn-clear { width: 100%; text-align: center; justify-content: center; }
+  }
+
+  /* ===== MOBILE RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    header { padding: 14px 16px; }
+    .logo-svg { width: 44px; height: 44px; }
+    .logo-text h1 { font-size: 16px; letter-spacing: 2px; }
+    .logo-text span { font-size: 8px; letter-spacing: 2px; }
+    .header-right strong { font-size: 17px; }
+    .header-right p { font-size: 9px; }
+
+    .summary-bar { padding: 0 12px 16px; flex-direction: column; gap: 10px; }
+    .balance-card { padding: 14px 16px; }
+    .balance-card .amount { font-size: 24px; }
+
+    main { padding: 16px; }
+
+    .form-grid { grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+    .form-grid .btn-add { grid-column: 1 / -1; height: 44px; }
+    .form-grid .form-group:nth-child(1) { grid-column: 1 / -1; }
+    .form-grid .form-group:nth-child(4) { grid-column: 1 / -1; }
+
+    .table-wrap { overflow-x: auto; }
+    table { min-width: 550px; }
+
+    .sumar-grid { grid-template-columns: 1fr; }
+    .report-grid { grid-template-columns: 1fr; }
+    .recurring-grid { grid-template-columns: 1fr; }
+
+    .filter-inner { flex-direction: column; align-items: stretch; gap: 10px; }
+    .filter-group { justify-content: space-between; }
+    .btn-export { width: 100%; justify-content: center; }
+    .btn-clear { width: 100%; }
+
+    /* Cost summary mobile fix */
+    .cost-summary { padding: 20px 16px; }
+    .cost-summary::after { display: none; }
+    .cost-summary-header { flex-direction: column; gap: 6px; align-items: flex-start; }
+    .cost-summary-header h2 { font-size: 11px; }
+    .cost-totals { grid-template-columns: 1fr; gap: 1px; }
+    .cost-total-block { padding: 14px 16px; }
+    .cost-total-value { font-size: 22px; }
+    .cost-item-name { font-size: 13px; }
+    .cost-item-amount { font-size: 17px; }
+
+    .section-title { font-size: 15px; }
+
+    .modal { padding: 20px 16px; }
+    .modal-grid { grid-template-columns: 1fr; }
+    .modal-grid .full { grid-column: 1; }
+
+    .rec-card { padding: 16px; }
+    .rec-card-name { font-size: 16px; }
+    .rec-amount { font-size: 22px; }
+  }
+
+  @media (max-width: 400px) {
+    .logo-text h1 { font-size: 13px; }
+    .balance-card .amount { font-size: 20px; }
+    .btn-pay-now { font-size: 9px; padding: 7px 8px; }
+  }
+
+
+  @media (max-width: 768px) {
+    html, body { overflow-x: hidden; }
+    
+    header { padding: 14px 20px; box-sizing: border-box; width: 100%; }
+    .summary-bar { padding: 0 20px 20px; box-sizing: border-box; width: 100%; }
+    main { padding: 20px; box-sizing: border-box; width: 100%; }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+      padding: 20px;
+      margin: 0 0 24px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .type-toggle button { font-size: 13px; padding: 12px; }
+    .btn-add { width: 100%; box-sizing: border-box; }
+
+    .table-wrap { width: 100%; box-sizing: border-box; }
+
+    .sumar-card, .report-card, .rec-card, .filter-section, .cost-summary {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+
+  /* ZOZNAM NA ZAPLATENIE */
+  .todo-summary-bar {
+    background: var(--black);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .todo-summary-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #8B2020, #E05050, #8B2020);
+  }
+  .todo-summary-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+  .todo-summary-amount { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; color: #E05050; }
+  .todo-summary-count { font-size: 11px; color: var(--gray); margin-top: 4px; }
+  .todo-summary-right { text-align: right; }
+
+  .todo-list { background: var(--white); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 2px 20px rgba(0,0,0,0.05); }
+  .todo-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #F0EAE0; transition: background 0.15s; }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-item:hover { background: #FFFBF3; }
+  .todo-item-main { flex: 1; min-width: 0; }
+  .todo-item-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .todo-item-meta { font-size: 11px; color: var(--gray); }
+  .todo-item-due { font-size: 11px; margin-top: 2px; }
+  .due-ok { color: var(--gray); }
+  .due-warn { color: #E05050; font-weight: 600; }
+  .todo-item-amount { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--expense-color); text-align: right; flex-shrink: 0; }
+  .todo-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-todo-pay { background: var(--black); color: var(--gold); border: 1px solid var(--gold-dark); border-radius: 3px; padding: 7px 12px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-todo-pay:hover { background: var(--gold); color: var(--black); }
+  .btn-todo-delete { background: none; border: 1px solid #E0D9CC; border-radius: 3px; padding: 7px 10px; font-size: 11px; color: var(--gray); cursor: pointer; transition: all 0.2s; }
+  .btn-todo-delete:hover { background: #FBE8E8; border-color: var(--expense-color); color: var(--expense-color); }
+
+  /* MOBILE TODO */
+  @media (max-width: 768px) {
+    .todo-item { flex-wrap: wrap; gap: 10px; }
+    .todo-item-main { width: 100%; }
+    .todo-actions { width: 100%; }
+    .btn-todo-pay { flex: 1; text-align: center; }
+    .todo-summary-bar { flex-direction: column; gap: 10px; text-align: center; }
+    .todo-summary-right { text-align: center; }
+  }
+
+
+  /* CUSTOM AUTOCOMPLETE */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-dropdown {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--white);
+    border: 1px solid var(--gold);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 200;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    display: none;
+  }
+  .autocomplete-dropdown.open { display: block; }
+  .autocomplete-item {
+    padding: 11px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid #F0EAE0;
+    transition: background 0.15s;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.selected { background: #FFFBF3; color: var(--gold-dark); font-weight: 500; }
+
+
+  .type-toggle button.active-loan { background: #1a5c8a; color: white; }
+  .method-toggle button.active-personal { background: #5c3d8a; color: white; }
+  .badge-loan { display: inline-block; background: #E3F0FA; color: #1a5c8a; font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: 2px; border: 1px solid #9FC8E8; }
+  .amount-loan { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: #1a5c8a; }
+
+  /* PÔŽIČKY SEKCIA */
+  .loan-card { background: var(--white); border: 1px solid rgba(26,92,138,0.3); border-radius: 4px; padding: 20px; box-shadow: 0 2px 20px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+  .loan-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #1a5c8a, #5aaee0, #1a5c8a); }
+  .loan-card.repaid { opacity: 0.6; }
+  .loan-card.repaid::before { background: #aaa; }
+  .loan-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .loan-card-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; }
+  .loan-amount { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: #1a5c8a; margin-bottom: 8px; }
+  .loan-meta { font-size: 11px; color: var(--gray); margin-bottom: 3px; }
+  .loan-meta span { color: var(--black); font-weight: 500; }
+  .loan-repaid-badge { display: inline-block; background: #E8F5EE; color: var(--income-color); font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 2px; border: 1px solid #C3E6D4; margin-top: 6px; }
+  .loan-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .btn-repay { flex: 1; background: #1a5c8a; color: white; border: none; border-radius: 3px; padding: 8px 12px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .btn-repay:hover { background: #154d75; }
+  .btn-repay:disabled { background: #aaa; cursor: default; }
+
+  .loans-summary { background: var(--black); border: 1px solid rgba(26,92,138,0.4); border-radius: 4px; padding: 20px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
+  .loans-summary::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #1a5c8a, #5aaee0, #1a5c8a); }
+  .loans-summary-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+  .loans-summary-amount { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; color: #5aaee0; }
+  .loans-summary-count { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+  @media (max-width: 768px) {
+    .loans-summary { flex-direction: column; gap: 10px; text-align: center; }
+    .loan-actions { flex-wrap: wrap; }
+    .btn-repay { width: 100%; }
+  }
+
+
+  /* HOTOVOSŤ / ÚČET */
+  .method-toggle { display: flex; border: 1px solid #E0D9CC; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .method-toggle button { flex: 1; padding: 8px 10px; border: none; background: var(--off-white); font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s; color: var(--gray); }
+  .method-toggle button.active-bank { background: #1a5c8a; color: white; }
+  .method-toggle button.active-cash { background: #7a5c1a; color: white; }
+
+  .cash-limit-reached { animation: goldPulse 2s infinite; }
+  @keyframes goldPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+    50% { box-shadow: 0 0 20px 6px rgba(201,168,76,0.3); }
+  }
+
+  .balance-card.cash-ok::before { background: #7a5c1a; }
+  .balance-card.cash-limit::before { background: linear-gradient(90deg, var(--gold-dark), var(--gold-light), var(--gold-dark)); }
+  .balance-card.cash-limit { border-color: var(--gold); }
+  .cash-limit-label { font-size: 9px; color: var(--gold); letter-spacing: 1px; margin-top: 4px; font-weight: 600; }
+
+
+  /* DOKUMENTY */
+  .doc-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px 32px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .doc-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-light), var(--gold-dark));
+  }
+  .doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--black);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .doc-subtitle {
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .doc-badge {
+    background: var(--black);
+    color: var(--gold);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 2px;
+    border: 1px solid var(--gold-dark);
+    white-space: nowrap;
+  }
+  .doc-parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .doc-party {
+    padding: 14px 16px;
+    background: var(--off-white);
+    border-radius: 3px;
+    border-left: 2px solid var(--gold);
+  }
+  .doc-party-label {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .doc-party-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--black);
+    margin-bottom: 3px;
+  }
+  .doc-party-detail {
+    font-size: 11px;
+    color: var(--gray);
+    line-height: 1.5;
+  }
+  .doc-articles {
+    margin-bottom: 20px;
+  }
+  .doc-article {
+    margin-bottom: 16px;
+  }
+  .doc-article-label {
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .doc-article-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 6px;
+  }
+  .doc-article-text {
+    font-size: 12px;
+    color: var(--gray);
+    line-height: 1.7;
+  }
+  .doc-article-bullets {
+    font-size: 12px;
+    color: var(--gray);
+    line-height: 1.8;
+    padding-left: 14px;
+  }
+  .doc-signatures {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+  .doc-sig {
+    text-align: center;
+    padding: 12px 8px;
+  }
+  .doc-sig-label { font-size: 9px; color: var(--gray); margin-bottom: 20px; }
+  .doc-sig-line {
+    border-bottom: 1px solid var(--gold-dark);
+    margin-bottom: 8px;
+    height: 1px;
+  }
+  .doc-sig-name { font-weight: 600; font-size: 12px; color: var(--black); }
+  .doc-sig-role { font-size: 10px; color: var(--gray); margin-top: 2px; }
+  .doc-date {
+    font-size: 11px;
+    color: var(--gray);
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .doc-parties { grid-template-columns: 1fr; }
+    .doc-signatures { grid-template-columns: 1fr; }
+    .doc-header { flex-direction: column; gap: 10px; }
+    .doc-card { padding: 20px 16px; }
+  }
+
+
+  /* PRIEČINKY */
+  .folder-section {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  .folder-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .folder-header:hover { background: #FFFBF3; }
+  .folder-header-left { display: flex; align-items: center; gap: 14px; }
+  .folder-icon {
+    width: 40px; height: 40px;
+    background: var(--black);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    border: 1px solid var(--gold-dark);
+    flex-shrink: 0;
+  }
+  .folder-info h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 2px;
+  }
+  .folder-info p {
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .folder-arrow {
+    font-size: 12px;
+    color: var(--gold);
+    transition: transform 0.25s;
+    font-weight: 600;
+  }
+  .folder-arrow.open { transform: rotate(180deg); }
+  .folder-body {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 24px;
+  }
+  .folder-body.open { display: block; }
+
+  /* DOCUMENT ITEM */
+  .doc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--off-white);
+    border-radius: 3px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .doc-item:hover { background: #FFFBF3; border-color: var(--gold); }
+  .doc-item-icon { font-size: 22px; flex-shrink: 0; }
+  .doc-item-info { flex: 1; min-width: 0; }
+  .doc-item-name { font-weight: 600; font-size: 13px; color: var(--black); margin-bottom: 2px; }
+  .doc-item-meta { font-size: 11px; color: var(--gray); }
+  .doc-item-badge { font-size: 9px; color: var(--gold-dark); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; background: #F5F0E0; padding: 2px 8px; border-radius: 2px; border: 1px solid var(--border); white-space: nowrap; }
+
+  /* FA PLACEHOLDER */
+  .fa-placeholder {
+    text-align: center;
+    padding: 30px 20px;
+    border: 2px dashed var(--border);
+    border-radius: 4px;
+    color: var(--gray);
+  }
+  .fa-placeholder .ph-icon { font-size: 32px; margin-bottom: 10px; }
+  .fa-placeholder p { font-size: 12px; line-height: 1.6; }
+  .fa-placeholder .ph-note { font-size: 10px; color: var(--gold-dark); margin-top: 8px; letter-spacing: 1px; }
+
+  /* CONTRACT INSIDE FOLDER */
+  .contract-preview {
+    background: var(--off-white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0;
+    overflow: hidden;
+  }
+  .contract-preview .doc-card {
+    box-shadow: none;
+    border: none;
+    margin-bottom: 0;
+  }
+  .contract-preview .doc-card::before { display: none; }
+
+
+  .btn-show-more {
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .btn-show-more:hover { background: #FFFBF3; color: var(--gold); }
+
+
+  @media (max-width: 768px) {
+    #loans-grid {
+      max-height: 360px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+
+  @media (max-width: 768px) {
+    .cost-items {
+      max-height: 384px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .cost-totals {
+      position: sticky;
+      bottom: 0;
+    }
+    .cost-summary {
+      padding-bottom: 0;
+    }
+  }
+
+
+
+
+
+  @media (min-width: 769px) {
+    /* HEADER */
+    header { padding: 20px 40px; }
+    .logo-svg { width: 60px; height: 60px; }
+    .logo-text h1 { font-size: 22px; }
+    .logo-text span { font-size: 10px; }
+    .header-right strong { font-size: 22px; }
+
+    /* SUMMARY BAR */
+    .summary-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 16px;
+      padding: 20px 40px 30px;
+    }
+    .balance-card.total {
+      grid-column: 1 / -1;
+    }
+    .balance-card .amount { font-size: 32px; }
+
+    /* MAIN */
+    main { padding: 30px 40px; max-width: 1200px; margin: 0 auto; }
+
+    /* FORM GRID */
+    .form-grid {
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 160px auto;
+    }
+
+    /* SUMAR GRID */
+    .sumar-grid { grid-template-columns: 1fr 1fr; }
+    .report-grid { grid-template-columns: 1fr 1fr; }
+    .recurring-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+    /* DOC PARTIES */
+    .doc-parties { grid-template-columns: 1fr 1fr 1fr; }
+    .doc-signatures { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* COST TOTALS */
+    .cost-totals { grid-template-columns: 1fr 1fr 1fr; }
+    .cost-summary::after { display: block; }
+    .cost-summary-header { flex-direction: row; align-items: flex-end; }
+  }
+
+
+  @media (min-width: 769px) {
+    .form-grid {
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr !important;
+    }
+    .form-grid .form-group:nth-child(1) { grid-column: 1; } /* TYP */
+    .form-grid .form-group:nth-child(2) { grid-column: 2; } /* MENO */
+    .form-grid .form-group:nth-child(3) { grid-column: 3; } /* SUMA */
+    .form-grid .form-group:nth-child(4) { grid-column: 4; } /* DATUM */
+    .form-grid .form-group:nth-child(5) { grid-column: 5; } /* POZNAMKA */
+    .form-grid .form-group:nth-child(6) { grid-column: 1 / 3; } /* FA */
+    .form-grid .form-group:nth-child(7) { grid-column: 3 / 5; } /* SPOSOB */
+    .form-grid .btn-add { grid-column: 5; align-self: end; }
+  }
+
+
+  .modal-overlay.import-modal .modal { max-width: 600px; }
+  #import-textarea {
+    width: 100%; height: 120px; border: 1px solid #E0D9CC;
+    border-radius: 3px; padding: 10px; font-family: monospace;
+    font-size: 11px; resize: vertical; outline: none;
+  }
+  #import-textarea:focus { border-color: var(--gold); }
+
+</style>
+</head>
+<body>
+
+<div class="notif" id="notif"></div>
+
+<header>
+  <div class="logo-area">
+    <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#9A7A30"/>
+          <stop offset="50%" style="stop-color:#E8C97A"/>
+          <stop offset="100%" style="stop-color:#9A7A30"/>
+        </linearGradient>
+        <linearGradient id="darkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#555"/>
+          <stop offset="100%" style="stop-color:#111"/>
+        </linearGradient>
+      </defs>
+      <text x="8" y="72" font-family="Georgia, serif" font-size="62" font-weight="700" fill="url(#goldGrad)">L</text>
+      <text x="38" y="78" font-family="Georgia, serif" font-size="58" font-weight="700" fill="url(#darkGrad)">S</text>
+      <text x="34" y="60" font-family="Georgia, serif" font-size="20" font-weight="400" fill="url(#goldGrad)">&amp;</text>
+    </svg>
+    <div class="logo-text">
+      <h1>Lexa &amp; Svet</h1>
+      <span>Transparentná Peňaženka</span>
+      <div class="gold-separator"></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <p>Reálny zostatok</p>
+    <strong id="header-balance">0,00 €</strong>
+  </div>
+</header>
+
+<div class="summary-bar">
+  <div class="balance-card total">
+    <label>Celkové výnosy</label>
+    <div class="amount" id="total-balance">0,00 €</div>
+    <div class="count" id="total-count">0 transakcií</div>
+  </div>
+  <div class="balance-card income">
+    <label>Celkové príjmy</label>
+    <div class="amount" id="total-income">0,00 €</div>
+    <div class="count" id="income-count">0 príjmov</div>
+  </div>
+  <div class="balance-card expense">
+    <label>Celkové výdavky</label>
+    <div class="amount" id="total-expense">0,00 €</div>
+    <div class="count" id="expense-count">0 výdavkov</div>
+  </div>
+  <div class="balance-card cash-ok" id="cash-card">
+    <label>💵 Kasa (hotovosť)</label>
+    <div class="amount" id="cash-balance" style="color:#E8C97A;">0,00 €</div>
+    <div class="count">limit 5 000 €</div>
+    <div class="cash-limit-label" id="cash-limit-label" style="display:none;">⬛ LIMIT DOSIAHNUTÝ</div>
+  </div>
+  <div class="balance-card" style="border-color:rgba(26,92,138,0.3);">
+    <label style="color:#5aaee0;">🏦 Účet</label>
+    <div class="amount" id="bank-balance" style="color:#5aaee0;">0,00 €</div>
+    <div class="count" id="bank-count">0 transakcií</div>
+  </div>
+</div>
+
+<main>
+
+
+  <!-- DOKUMENTY -->
+  <div class="section-title">Archív <span class="gold-line"></span></div>
+
+  <!-- PRIEČINOK 1: DOKUMENTY -->
+  <div class="folder-section">
+    <div class="folder-header" onclick="toggleFolder('folder-docs')">
+      <div class="folder-header-left">
+        <div class="folder-icon">📁</div>
+        <div class="folder-info">
+          <h3>Dokumenty</h3>
+          <p>Zmluvy, dodatky, dohody</p>
+        </div>
+      </div>
+      <div class="folder-arrow" id="arrow-folder-docs">▼</div>
+    </div>
+    <div class="folder-body" id="folder-docs">
+
+      <!-- Zmluva ako dokument -->
+      <div class="doc-item" id="zmluva-item" onclick="toggleZmluva()">
+        <div class="doc-item-icon">📄</div>
+        <div class="doc-item-info">
+          <div class="doc-item-name">Zmluva o poskytnutí podpory OZ</div>
+          <div class="doc-item-meta">§ 51 Občianskeho zákonníka &nbsp;·&nbsp; 26. 05. 2026 &nbsp;·&nbsp; 2 poskytovatelia</div>
+        </div>
+        <span class="doc-item-badge" id="zmluva-badge">▼ Zobraziť</span>
+      </div>
+
+      <!-- Zmluva detail - skrytý -->
+      <div id="zmluva-detail" style="display:none; margin-bottom:12px;">
+        <div style="text-align:right; margin-bottom:8px;">
+          <button onclick="closeZmluva()" style="background:var(--black);color:var(--gold);border:1px solid var(--gold-dark);border-radius:3px;padding:7px 16px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:2px;cursor:pointer;">✕ Zavrieť</button>
+        </div>
+        <div class="contract-preview">
+          <div class="doc-card">
+            <div class="doc-header">
+              <div>
+                <div class="doc-title">Zmluva o poskytnutí podpory OZ</div>
+                <div class="doc-subtitle">Uzatvorená podľa § 51 Občianskeho zákonníka &nbsp;·&nbsp; 26. 05. 2026</div>
+              </div>
+              <span class="doc-badge">✓ Platná</span>
+            </div>
+            <div class="doc-parties">
+              <div class="doc-party">
+                <div class="doc-party-label">Poskytovateľ č. 1</div>
+                <div class="doc-party-name">Mário Monček</div>
+                <div class="doc-party-detail">Rozkvet 2048/96<br>017 01 Považská Bystrica<br>Slovenská republika</div>
+              </div>
+              <div class="doc-party">
+                <div class="doc-party-label">Poskytovateľ č. 2</div>
+                <div class="doc-party-name">Milan Letko</div>
+                <div class="doc-party-detail">Člen riadiaceho výboru OZ<br>letkomilan@lexaasvet.sk<br>+421 917 368 475</div>
+              </div>
+              <div class="doc-party">
+                <div class="doc-party-label">Prijímateľ</div>
+                <div class="doc-party-name">Lexa a Svet</div>
+                <div class="doc-party-detail">IČO: 57109761<br>Reg. MV SR: VVS/1-900/90-72626<br>Predseda: Mário Monček</div>
+              </div>
+            </div>
+            <div class="doc-articles">
+              <div class="doc-article">
+                <div class="doc-article-label">Článok I</div>
+                <div class="doc-article-title">Predmet zmluvy</div>
+                <div class="doc-article-text">Poskytovatelia sa zaväzujú podľa svojich možností poskytovať OZ finančnú, materiálnu alebo inú podporu. Môže ísť o pôžičky, úhradu poplatkov, služieb, výroby, nákup materiálu alebo vykonávanie činností s odloženou úhradou odmeny.</div>
+              </div>
+              <div class="doc-article">
+                <div class="doc-article-label">Článok II</div>
+                <div class="doc-article-title">Evidencia a preukázanie plnení</div>
+                <div class="doc-article-text">Každé plnenie bude zdokumentované faktúrou, potvrdením o úhrade, bankovým výpisom, pokladničným dokladom alebo iným účtovným dokladom. OZ uznáva tieto doklady ako záväzok voči Poskytovateľom.</div>
+              </div>
+              <div class="doc-article">
+                <div class="doc-article-label">Článok III</div>
+                <div class="doc-article-title">Odložená úhrada</div>
+                <div class="doc-article-text">Pri vykonaní práce alebo služby môže byť dohodnutá odložená úhrada. Eviduje sa druh služby, výška odmeny a dátum vzniku záväzku. OZ sa zaväzuje uhradiť podľa svojich možností.</div>
+              </div>
+              <div class="doc-article">
+                <div class="doc-article-label">Článok IV</div>
+                <div class="doc-article-title">Záverečné ustanovenia</div>
+                <div class="doc-article-text">Zmluva na dobu neurčitú. Meniť písomne. Platnosť dňom podpisu. Tri rovnopisy.</div>
+              </div>
+            </div>
+            <div class="doc-date">V Považskej Bystrici, dňa 26. 05. 2026</div>
+            <div class="doc-signatures">
+              <div class="doc-sig">
+                <div class="doc-sig-label">Za Poskytovateľa č. 1</div>
+                <div class="doc-sig-line"></div>
+                <div class="doc-sig-name">Mário Monček</div>
+                <div class="doc-sig-role">Poskytovateľ č. 1</div>
+              </div>
+              <div class="doc-sig">
+                <div class="doc-sig-label">Za Poskytovateľa č. 2</div>
+                <div class="doc-sig-line"></div>
+                <div class="doc-sig-name">Milan Letko</div>
+                <div class="doc-sig-role">Poskytovateľ č. 2</div>
+              </div>
+              <div class="doc-sig">
+                <div class="doc-sig-label">Za OZ Lexa a Svet</div>
+                <div class="doc-sig-line"></div>
+                <div class="doc-sig-name">Mário Monček</div>
+                <div class="doc-sig-role">Predseda OZ</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center; padding: 12px 0 4px;">
+          <button onclick="closeZmluva()" style="background:none;border:1px solid var(--gold-dark);border-radius:3px;padding:8px 24px;font-family:'Montserrat',sans-serif;font-size:10px;color:var(--gold-dark);font-weight:600;letter-spacing:2px;cursor:pointer;">▲ Zavrieť zmluvu</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PRIEČINOK 2: FA / DOKLADY / BLOČKY -->
+  <div class="folder-section" style="margin-bottom:30px;">
+    <div class="folder-header" onclick="toggleFolder('folder-fa')">
+      <div class="folder-header-left">
+        <div class="folder-icon">🧾</div>
+        <div class="folder-info">
+          <h3>FA / Doklady / Bločky</h3>
+          <p>Faktúry, potvrdenia, účtenky</p>
+        </div>
+      </div>
+      <div class="folder-arrow" id="arrow-folder-fa">▼</div>
+    </div>
+    <div class="folder-body" id="folder-fa">
+      <div class="fa-placeholder">
+        <div class="ph-icon">☁️</div>
+        <p>Nahrávanie súborov bude dostupné vo verzii B.<br>Faktúry, bločky a doklady nahráš priamo z mobilu alebo PC.</p>
+        <div class="ph-note">— Pripravujeme: Google Drive integrácia —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-section no-print">
+    <div class="section-title">Pridať Transakciu <span class="gold-line"></span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Typ</label>
+        <div class="type-toggle">
+          <button id="btn-income" class="active-income" onclick="setType('income')">▲ Dar</button>
+          <button id="btn-loan" onclick="setType('loan')">⟳ Pôžička</button>
+          <button id="btn-expense" onclick="setType('expense')">▼ Výdavok</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Meno / Od koho / Komu</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="input-name" placeholder="napr. Juraj Novák" autocomplete="off" oninput="showSuggestions()" onblur="hideSuggestions()" onkeydown="autoKey(event)" />
+          <div class="autocomplete-dropdown" id="names-dropdown"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Suma (€)</label>
+        <input type="number" id="input-amount" placeholder="0.00" step="0.01" min="0" />
+      </div>
+      <div class="form-group">
+        <label>Dátum</label>
+        <input type="date" id="input-date" />
+      </div>
+      <div class="form-group">
+        <label>Poznámka / Účel platby</label>
+        <input type="text" id="input-note" placeholder="napr. Výroba kartičiek" />
+      </div>
+      <div class="form-group">
+        <label>Číslo dokladu / FA</label>
+        <input type="text" id="input-fa" placeholder="napr. FA2026001" />
+      </div>
+      <div class="form-group">
+        <label>Spôsob</label>
+        <div class="method-toggle">
+          <button id="btn-bank" class="active-bank" onclick="setMethod('bank')">🏦 Účet</button>
+          <button id="btn-cash" onclick="setMethod('cash')">💵 Kasa</button>
+          <button id="btn-personal" onclick="setMethod('personal')">👤 Osobný</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addTransaction()">+ Pridať</button>
+    </div>
+  </div>
+
+  <!-- TRANSACTIONS TABLE -->
+  <div class="section-title">Prehľad Transakcií <span class="gold-line"></span></div>
+  <div id="transactions-container"></div>
+
+
+  <!-- PÔŽIČKY -->
+  <div class="section-title">Pôžičky <span class="gold-line"></span></div>
+  <div class="loans-summary">
+    <div>
+      <div class="loans-summary-label">Celkom dlžíme</div>
+      <div class="loans-summary-amount" id="loans-total">0,00 €</div>
+      <div class="loans-summary-count" id="loans-count">0 nesplatených pôžičiek</div>
+    </div>
+    <div class="loans-summary-count" style="text-align:right;">
+      <div style="color:var(--gray);font-size:10px;letter-spacing:1px;">Splatené</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#5DBE8A;" id="loans-repaid-total">0,00 €</div>
+    </div>
+  </div>
+  <div id="loans-grid-wrap" style="margin-bottom:30px;">
+  <div class="recurring-grid" id="loans-grid" style="max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div class="rec-empty">Žiadne pôžičky. Pridajte transakciu typu ⟳ Pôžička.</div>
+  </div>
+
+  </div>
+  <!-- SUMÁR PER OSOBA -->
+  <div class="section-title">Sumár <span class="gold-line"></span></div>
+  <div class="sumar-grid">
+    <div class="sumar-card">
+      <h3>▲ Kto vložil — koľko</h3>
+      <div id="sumar-income"></div>
+    </div>
+    <div class="sumar-card">
+      <h3>▼ Zaplatené — komu a koľko</h3>
+      <div id="sumar-expense"></div>
+    </div>
+  </div>
+
+  <!-- VÝKAZY -->
+  <div class="section-title">Výkazy <span class="gold-line"></span></div>
+  <div class="report-grid">
+    <div class="report-card">
+      <h3>Denný výkaz</h3>
+      <div id="daily-report"><p style="color:var(--gray);font-size:12px;">Vyberte deň vo filtri nižšie.</p></div>
+    </div>
+    <div class="report-card">
+      <h3>Mesačný výkaz</h3>
+      <div id="monthly-report"><p style="color:var(--gray);font-size:12px;">Vyberte mesiac vo filtri nižšie.</p></div>
+    </div>
+  </div>
+
+
+
+  <!-- ZOZNAM NA ZAPLATENIE -->
+  <div class="section-title">Zoznam na Zaplatenie <span class="gold-line"></span></div>
+
+  <div class="todo-summary-bar">
+    <div>
+      <div class="todo-summary-label">Celkom treba zaplatiť</div>
+      <div class="todo-summary-amount" id="todo-total">0,00 €</div>
+      <div class="todo-summary-count" id="todo-count">0 položiek čaká</div>
+    </div>
+    <div class="todo-summary-right no-print">
+      <button class="btn-add" onclick="openTodoModal()">+ Pridať položku</button>
+    </div>
+  </div>
+
+  <div class="todo-list" id="todo-list">
+    <div class="empty-state"><div class="icon">✅</div><p>Žiadne položky na zaplatenie.</p></div>
+  </div>
+
+  <!-- TODO MODAL -->
+  <div class="modal-overlay" id="todo-modal">
+    <div class="modal">
+      <h2>Pridať na zaplatenie</h2>
+      <div class="modal-grid">
+        <div class="form-group full">
+          <label>Komu / Čo</label>
+          <input type="text" id="todo-name" placeholder="napr. Sportzoo – faktúra za kartičky" />
+        </div>
+        <div class="form-group">
+          <label>Suma (€)</label>
+          <input type="number" id="todo-amount" placeholder="0.00" step="0.01" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Dokedy (termín)</label>
+          <input type="date" id="todo-due" />
+        </div>
+        <div class="form-group full">
+          <label>Poznámka / VS</label>
+          <input type="text" id="todo-note" placeholder="napr. VS: 20260525" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeTodoModal()">Zrušiť</button>
+        <button class="btn-modal-save" onclick="saveTodo()">Uložiť</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRAVIDELNÉ PLATBY -->
+  <div class="section-title">Pravidelné Platby <span class="gold-line"></span></div>
+  <div style="margin-bottom:16px;" class="no-print">
+    <button class="btn-add" onclick="openRecModal()">+ Pridať pravidelnú platbu</button>
+  </div>
+  <div class="recurring-grid" id="recurring-grid">
+    <div class="rec-empty">Zatiaľ žiadne pravidelné platby. Kliknite na + Pridať.</div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="rec-modal">
+    <div class="modal">
+      <h2 id="modal-title">Nová Pravidelná Platba</h2>
+      <div class="modal-grid">
+        <div class="form-group full">
+          <label>Názov služby</label>
+          <input type="text" id="rec-name" placeholder="napr. Claude Pro, Hosting, Doména..." />
+        </div>
+        <div class="form-group">
+          <label>Suma (€)</label>
+          <input type="number" id="rec-amount" placeholder="0.00" step="0.01" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Periodicita</label>
+          <select id="rec-period">
+            <option value="mesačne">Mesačne</option>
+            <option value="ročne">Ročne</option>
+            <option value="štvrťročne">Štvrťročne</option>
+            <option value="týždenne">Týždenne</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dátum ďalšej platby</label>
+          <input type="date" id="rec-date" />
+        </div>
+        <div class="form-group">
+          <label>Variabilný symbol (VS)</label>
+          <input type="text" id="rec-vs" placeholder="napr. 12345678" />
+        </div>
+        <div class="form-group full">
+          <label>Poznámka</label>
+          <input type="text" id="rec-note" placeholder="napr. Firemný účet, ročná licencia..." />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeRecModal()">Zrušiť</button>
+        <button class="btn-modal-save" onclick="saveRec()">Uložiť</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SÚHRN MESAČNÝCH NÁKLADOV -->
+  <div class="section-title">Súhrn Nákladov <span class="gold-line"></span></div>
+  <div class="cost-summary" id="cost-summary">
+    <div class="cost-summary-header">
+      <div>
+        <h2>Pravidelné Mesačné Náklady</h2>
+      </div>
+      <p id="cost-count-label">0 aktívnych platieb</p>
+    </div>
+    <div class="cost-items" id="cost-items">
+      <div class="cost-empty">Pridajte pravidelné platby vyššie.</div>
+    </div>
+    <div class="cost-divider"></div>
+    <div class="cost-totals">
+      <div class="cost-total-block">
+        <div class="cost-total-label">Mesačne spolu</div>
+        <div class="cost-total-value" id="cost-monthly">0,00 €</div>
+      </div>
+      <div class="cost-total-block">
+        <div class="cost-total-label">Ročne spolu</div>
+        <div class="cost-total-value" id="cost-yearly">0,00 €</div>
+      </div>
+      <div class="cost-total-block">
+        <div class="cost-total-label">Denne (priemer)</div>
+        <div class="cost-total-value" id="cost-daily">0,00 €</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER — NA KONCI -->
+  <div class="section-title no-print">Filter &amp; Export <span class="gold-line"></span></div>
+  <div class="filter-section no-print">
+    <div class="filter-inner">
+      <div class="filter-group">
+        <label>Typ:</label>
+        <select id="filter-type" onchange="renderTable()">
+          <option value="all">Všetky</option>
+          <option value="income">Príjmy</option>
+          <option value="expense">Výdavky</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Mesiac:</label>
+        <input type="month" id="filter-month" onchange="renderAll()" />
+      </div>
+      <div class="filter-group">
+        <label>Deň:</label>
+        <input type="date" id="filter-day" onchange="renderAll()" />
+      </div>
+      <button class="btn-clear" onclick="clearFilters()">✕ Zrušiť filter</button>
+      <button class="btn-export" onclick="window.print()">🖨 Tlačiť / PDF</button>
+      <button class="btn-export" onclick="exportData()" style="background:var(--black);color:var(--gold);border-color:var(--gold-dark);">⬇ Export dát</button>
+      <button class="btn-export" onclick="openImport()" style="background:var(--gold);color:var(--black);border-color:var(--gold);">⬆ Import dát</button>
+    </div>
+  </div>
+
+
+  <!-- EDIT TRANSAKCIE MODAL -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h2>Upraviť Transakciu</h2>
+      <div class="modal-grid">
+        <div class="form-group full">
+          <label>Typ</label>
+          <div class="type-toggle">
+            <button id="edit-btn-income" onclick="setEditType('income')">▲ Dar</button>
+            <button id="edit-btn-loan" onclick="setEditType('loan')">⟳ Pôžička</button>
+            <button id="edit-btn-expense" onclick="setEditType('expense')">▼ Výdavok</button>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Spôsob platby</label>
+          <div class="method-toggle">
+            <button id="edit-btn-bank" class="active-bank" onclick="setEditMethod('bank')">🏦 Účet</button>
+            <button id="edit-btn-cash" onclick="setEditMethod('cash')">💵 Kasa</button>
+            <button id="edit-btn-personal" onclick="setEditMethod('personal')">👤 Osobný</button>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Meno</label>
+          <input type="text" id="edit-name" />
+        </div>
+        <div class="form-group">
+          <label>Suma (€)</label>
+          <input type="number" id="edit-amount" step="0.01" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Dátum</label>
+          <input type="date" id="edit-date" />
+        </div>
+        <div class="form-group full">
+          <label>Poznámka</label>
+          <input type="text" id="edit-note" />
+        </div>
+        <div class="form-group full">
+          <label>Číslo dokladu / FA</label>
+          <input type="text" id="edit-fa" placeholder="napr. FA2026001" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeEditModal()">Zrušiť</button>
+        <button class="btn-modal-save" onclick="saveEdit()">Uložiť zmeny</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- IMPORT MODAL -->
+  <div class="modal-overlay import-modal" id="import-modal">
+    <div class="modal">
+      <h2 id="import-modal-title">Import Dát</h2>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label id="import-label">Vlož exportovaný kód</label>
+        <textarea id="import-textarea" placeholder="Vlož sem kód z exportu..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeImport()">Zavrieť</button>
+        <button class="btn-modal-save" id="copy-btn" style="display:none;background:#1a5c8a;" onclick="copyExport()">📋 Kopírovať</button>
+        <button class="btn-modal-save" id="import-btn" onclick="importData()">✓ Importovať</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  let transactions = JSON.parse(localStorage.getItem('lexaTransactions') || '[]');
+  let currentType = 'income';
+
+  let currentMethod = 'bank';
+
+  function setMethod(method) {
+    currentMethod = method;
+    document.getElementById('btn-bank').className = method === 'bank' ? 'active-bank' : '';
+    document.getElementById('btn-cash').className = method === 'cash' ? 'active-cash' : '';
+    document.getElementById('btn-personal').className = method === 'personal' ? 'active-personal' : '';
+  }
+
+  function setType(type) {
+    currentType = type;
+    document.getElementById('btn-income').className = type === 'income' ? 'active-income' : '';
+    document.getElementById('btn-loan').className = type === 'loan' ? 'active-loan' : '';
+    document.getElementById('btn-expense').className = type === 'expense' ? 'active-expense' : '';
+  }
+
+  function formatEur(num) {
+    return num.toLocaleString('sk-SK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+  }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString('sk-SK', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function showNotif(msg) {
+    const n = document.getElementById('notif');
+    n.textContent = msg;
+    n.classList.add('show');
+    setTimeout(() => n.classList.remove('show'), 2500);
+  }
+
+  function addTransaction() {
+    const name = document.getElementById('input-name').value.trim();
+    const amount = parseFloat(document.getElementById('input-amount').value);
+    const note = document.getElementById('input-note').value.trim();
+    const fa = document.getElementById('input-fa').value.trim();
+    const inputDate = document.getElementById('input-date').value;
+    if (!name) { showNotif('⚠ Zadajte meno'); return; }
+    if (!amount || amount <= 0) { showNotif('⚠ Zadajte platnú sumu'); return; }
+    const dateObj = inputDate ? new Date(inputDate + 'T12:00:00') : new Date();
+    transactions.unshift({
+      id: Date.now(),
+      date: dateObj.toISOString(),
+      name,
+      type: currentType,
+      method: currentMethod,
+      amount,
+      note,
+      fa
+    });
+    save();
+    renderAll();
+    document.getElementById('input-name').value = '';
+    document.getElementById('input-amount').value = '';
+    document.getElementById('input-note').value = '';
+    document.getElementById('input-fa').value = '';
+    document.getElementById('input-date').value = new Date().toISOString().slice(0,10);
+    setMethod('bank');
+    showNotif(currentType === 'income' ? '✓ Dar pridaný' : currentType === 'loan' ? '✓ Pôžička pridaná' : '✓ Výdavok pridaný');
+  }
+
+  function deleteTransaction(id) {
+    if (!confirm('Zmazať túto transakciu?')) return;
+    transactions = transactions.filter(t => t.id !== id);
+    save();
+    renderAll();
+    showNotif('Transakcia vymazaná');
+  }
+
+  function save() { localStorage.setItem('lexaTransactions', JSON.stringify(transactions)); }
+
+  function clearFilters() {
+    document.getElementById('filter-type').value = 'all';
+    document.getElementById('filter-month').value = '';
+    document.getElementById('filter-day').value = '';
+    renderAll();
+  }
+
+  function getFiltered() {
+    const fType = document.getElementById('filter-type').value;
+    const fMonth = document.getElementById('filter-month').value;
+    const fDay = document.getElementById('filter-day').value;
+    return transactions.filter(t => {
+      const iso = new Date(t.date).toISOString();
+      if (fType !== 'all' && t.type !== fType) return false;
+      if (fMonth && iso.slice(0,7) !== fMonth) return false;
+      if (fDay && iso.slice(0,10) !== fDay) return false;
+      return true;
+    });
+  }
+
+  function isMobile() { return window.innerWidth <= 768; }
+
+  function renderTable() {
+    const filtered = getFiltered();
+    const container = document.getElementById('transactions-container');
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:4px;box-shadow:0 2px 20px rgba(0,0,0,0.05);margin-bottom:30px;">
+          <div class="empty-state"><div class="icon">📋</div><p>Žiadne transakcie.</p></div>
+        </div>`;
+      return;
+    }
+
+    const allSorted = [...transactions].sort((a,b) => new Date(a.date)-new Date(b.date));
+    const runMap = {};
+    let run = 0;
+    allSorted.forEach(t => { run += (t.type === 'income' || t.type === 'loan') ? t.amount : -t.amount; runMap[t.id] = run; });
+
+    if (isMobile()) {
+      container.innerHTML = `
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:30px;box-shadow:0 2px 20px rgba(0,0,0,0.05);">
+          <div style="background:var(--black);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);">Transakcia</span>
+            <span style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);">${filtered.length} záznamov</span>
+          </div>
+          <div style="max-height:420px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+          ${filtered.map((t,i) => `
+            <div style="padding:14px 16px;border-bottom:1px solid #F0EAE0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <span class="${t.type==='income'?'badge-income':t.type==='loan'?'badge-loan':'badge-expense'}">${t.type==='income'?'▲ Dar':t.type==='loan'?'⟳ Pôžička':'▼ Výdavok'}</span>
+                  <span style="font-size:9px;color:var(--gray);">${t.method==='cash'?'💵 Kasa':t.method==='personal'?'👤 Osobný účet':'🏦 Účet'}</span>
+                </div>
+                <span style="color:var(--gray);font-size:11px;">${formatDate(t.date)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="flex:1;min-width:0;margin-right:12px;">
+                  <div style="font-weight:600;font-size:14px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</div>
+                  <div style="color:var(--gray);font-size:12px;font-style:italic;">${t.note||'—'}</div>
+              ${t.fa ? `<div style="font-size:11px;color:var(--gold-dark);font-weight:600;margin-top:2px;">📄 ${t.fa}</div>` : ''}
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                  <div class="${t.type==='income'?'amount-income':t.type==='loan'?'amount-loan':'amount-expense'}">${t.type==='income'||t.type==='loan'?'+':'-'}${formatEur(t.amount)}</div>
+                  <div style="font-size:10px;color:var(--gray);">zostatok: ${formatEur(runMap[t.id])}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;" class="no-print">
+                <button class="btn-rec-edit" onclick="openEditModal(${t.id})">✎</button>
+                <button class="btn-delete" onclick="deleteTransaction(${t.id})">✕ zmazať</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+    } else {
+      container.innerHTML = `
+        <div class="table-wrap" style="margin-bottom:30px;">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Dátum</th><th>Meno</th><th>Typ</th>
+              <th>Poznámka / Účel</th>
+              <th>Doklad / FA</th>
+              <th style="text-align:right">Suma</th>
+              <th style="text-align:right">Zostatok</th>
+              <th class="no-print"></th>
+            </tr></thead>
+            <tbody>
+              ${filtered.map((t,i) => `
+                <tr>
+                  <td style="color:var(--gray);font-size:11px;">${filtered.length-i}</td>
+                  <td class="date-cell">${formatDate(t.date)}</td>
+                  <td class="name-cell">${t.name}</td>
+                  <td><span class="${t.type==='income'?'badge-income':t.type==='loan'?'badge-loan':'badge-expense'}">${t.type==='income'?'▲ Dar':t.type==='loan'?'⟳ Pôžička':'▼ Výdavok'}</span></td>
+                  <td class="note-cell">${t.note||'—'}</td>
+                  <td style="font-size:11px;color:var(--gold-dark);font-weight:600;">${t.fa||'—'}</td>
+                  <td style="text-align:right"><span class="${t.type==='income'?'amount-income':t.type==='loan'?'amount-loan':'amount-expense'}">${t.type==='income'||t.type==='loan'?'+':'-'}${formatEur(t.amount)}</span></td>
+                  <td style="text-align:right"><span class="running-balance">${formatEur(runMap[t.id])}</span></td>
+                  <td class="no-print" style="text-align:right;white-space:nowrap;">
+                    <button class="btn-rec-edit" style="margin-right:4px;" onclick="openEditModal(${t.id})">✎</button>
+                    <button class="btn-delete" onclick="deleteTransaction(${t.id})">✕</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+  }
+
+  window.addEventListener('resize', renderAll);
+
+  function renderSumar() {
+    // Income per person
+    const incomeMap = {};
+    transactions.filter(t=>t.type==='income'||t.type==='loan').forEach(t => {
+      if (!incomeMap[t.name]) incomeMap[t.name] = { total: 0, count: 0 };
+      incomeMap[t.name].total += t.amount;
+      incomeMap[t.name].count++;
+    });
+    const incomeEl = document.getElementById('sumar-income');
+    const incomeEntries = Object.entries(incomeMap).sort((a,b)=>b[1].total-a[1].total);
+    if (incomeEntries.length === 0) {
+      incomeEl.innerHTML = `<p style="color:var(--gray);font-size:12px;">Zatiaľ žiadne príjmy.</p>`;
+    } else {
+      incomeEl.innerHTML = incomeEntries.map(([name, d]) => `
+        <div class="sumar-row">
+          <div><div class="sumar-name">${name}</div><div class="sumar-count">${d.count}× transakcia</div></div>
+          <div class="sumar-amount-income">+${formatEur(d.total)}</div>
+        </div>
+      `).join('');
+    }
+
+    // Expense per recipient
+    const expenseMap = {};
+    transactions.filter(t=>t.type==='expense').forEach(t => {
+      const key = t.name + (t.note ? ` — ${t.note}` : '');
+      if (!expenseMap[key]) expenseMap[key] = { total: 0, count: 0, name: t.name, note: t.note };
+      expenseMap[key].total += t.amount;
+      expenseMap[key].count++;
+    });
+    const expenseEl = document.getElementById('sumar-expense');
+    const expenseEntries = Object.entries(expenseMap).sort((a,b)=>b[1].total-a[1].total);
+    if (expenseEntries.length === 0) {
+      expenseEl.innerHTML = `<p style="color:var(--gray);font-size:12px;">Zatiaľ žiadne výdavky.</p>`;
+    } else {
+      expenseEl.innerHTML = expenseEntries.map(([key, d]) => `
+        <div class="sumar-row">
+          <div>
+            <div class="sumar-name">${d.name}</div>
+            ${d.note ? `<div class="sumar-count">${d.note}</div>` : `<div class="sumar-count">${d.count}× transakcia</div>`}
+          </div>
+          <div class="sumar-amount-expense">-${formatEur(d.total)}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function renderSummary() {
+    const income = transactions.filter(t=>t.type==='income'||t.type==='loan').reduce((s,t)=>s+t.amount,0);
+    const expense = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const balance = income - expense;
+    document.getElementById('total-balance').textContent = formatEur(balance);
+    document.getElementById('header-balance').textContent = formatEur(balance);
+    document.getElementById('total-income').textContent = formatEur(income);
+    document.getElementById('total-expense').textContent = formatEur(expense);
+    document.getElementById('total-count').textContent = transactions.length + ' transakcií';
+    document.getElementById('income-count').textContent = transactions.filter(t=>t.type==='income'||t.type==='loan').length + ' príjmov';
+    document.getElementById('expense-count').textContent = transactions.filter(t=>t.type==='expense').length + ' výdavkov';
+
+    // Cash vs Bank
+    const cashIn = transactions.filter(t=>t.method==='cash'&&(t.type==='income'||t.type==='loan')).reduce((s,t)=>s+t.amount,0);
+    const cashOut = transactions.filter(t=>t.method==='cash'&&t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const cashBalance = cashIn - cashOut;
+    const bankIn = transactions.filter(t=>(t.method==='bank'||!t.method)&&(t.type==='income'||t.type==='loan')).reduce((s,t)=>s+t.amount,0);
+    const bankOut = transactions.filter(t=>(t.method==='bank'||!t.method)&&t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const bankBalance = bankIn - bankOut;
+
+    // Personal account balance (loans/expenses paid from personal)
+    const personalIn = transactions.filter(t=>t.method==='personal'&&(t.type==='income'||t.type==='loan')).reduce((s,t)=>s+t.amount,0);
+    const personalOut = transactions.filter(t=>t.method==='personal'&&t.type==='expense').reduce((s,t)=>s+t.amount,0);
+
+    document.getElementById('cash-balance').textContent = formatEur(cashBalance);
+    document.getElementById('bank-balance').textContent = formatEur(bankBalance);
+    document.getElementById('bank-count').textContent = transactions.filter(t=>t.method==='bank'||!t.method).length + ' transakcií';
+
+    const cashCard = document.getElementById('cash-card');
+    const limitLabel = document.getElementById('cash-limit-label');
+    if (cashBalance >= 5000) {
+      cashCard.className = 'balance-card cash-limit cash-limit-reached';
+      limitLabel.style.display = 'block';
+      limitLabel.style.color = 'var(--gold)';
+    } else {
+      cashCard.className = 'balance-card cash-ok';
+      limitLabel.style.display = 'none';
+    }
+  }
+
+  function renderReports() {
+    const fDay = document.getElementById('filter-day').value;
+    const fMonth = document.getElementById('filter-month').value;
+    const daily = document.getElementById('daily-report');
+    if (fDay) {
+      const dayTx = transactions.filter(t => new Date(t.date).toISOString().slice(0,10) === fDay);
+      const dayIn = dayTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+      const dayOut = dayTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      daily.innerHTML = `
+        <div class="report-row"><span class="label">Deň</span><span>${new Date(fDay).toLocaleDateString('sk-SK')}</span></div>
+        <div class="report-row"><span class="label">Počet transakcií</span><span>${dayTx.length}</span></div>
+        <div class="report-row"><span class="label">Príjmy</span><span class="val-income">+${formatEur(dayIn)}</span></div>
+        <div class="report-row"><span class="label">Výdavky</span><span class="val-expense">-${formatEur(dayOut)}</span></div>
+        <div class="report-row"><span class="label">Bilancia dňa</span><span class="val-gold">${formatEur(dayIn-dayOut)}</span></div>
+      `;
+    } else {
+      daily.innerHTML = `<p style="color:var(--gray);font-size:12px;">Vyberte deň vo filtri nižšie.</p>`;
+    }
+    const monthly = document.getElementById('monthly-report');
+    if (fMonth) {
+      const monTx = transactions.filter(t => new Date(t.date).toISOString().slice(0,7) === fMonth);
+      const monIn = monTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+      const monOut = monTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      const [yr, mo] = fMonth.split('-');
+      const monthName = new Date(parseInt(yr), parseInt(mo)-1, 1).toLocaleDateString('sk-SK', {month:'long', year:'numeric'});
+      monthly.innerHTML = `
+        <div class="report-row"><span class="label">Mesiac</span><span>${monthName}</span></div>
+        <div class="report-row"><span class="label">Počet transakcií</span><span>${monTx.length}</span></div>
+        <div class="report-row"><span class="label">Príjmy</span><span class="val-income">+${formatEur(monIn)}</span></div>
+        <div class="report-row"><span class="label">Výdavky</span><span class="val-expense">-${formatEur(monOut)}</span></div>
+        <div class="report-row"><span class="label">Bilancia mesiaca</span><span class="val-gold">${formatEur(monIn-monOut)}</span></div>
+      `;
+    } else {
+      monthly.innerHTML = `<p style="color:var(--gray);font-size:12px;">Vyberte mesiac vo filtri nižšie.</p>`;
+    }
+  }
+
+  function getNames() {
+    return [...new Set(transactions.map(t => t.name))].sort();
+  }
+
+  function updateDatalist() { /* kept for compat */ }
+
+  let autoSelected = -1;
+
+  function showSuggestions() {
+    const val = document.getElementById('input-name').value.trim().toLowerCase();
+    const dropdown = document.getElementById('names-dropdown');
+    const names = getNames().filter(n => n.toLowerCase().includes(val) && val.length > 0);
+    if (names.length === 0) { dropdown.classList.remove('open'); return; }
+    autoSelected = -1;
+    dropdown.innerHTML = names.map((n,i) => `<div class="autocomplete-item" onmousedown="pickName('${n.replace(/'/g,"\'")}')">${n}</div>`).join('');
+    dropdown.classList.add('open');
+  }
+
+  function hideSuggestions() {
+    setTimeout(() => document.getElementById('names-dropdown').classList.remove('open'), 150);
+  }
+
+  function pickName(name) {
+    document.getElementById('input-name').value = name;
+    document.getElementById('names-dropdown').classList.remove('open');
+  }
+
+  function autoKey(e) {
+    const dropdown = document.getElementById('names-dropdown');
+    const items = dropdown.querySelectorAll('.autocomplete-item');
+    if (!dropdown.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') {
+      autoSelected = Math.min(autoSelected + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      autoSelected = Math.max(autoSelected - 1, 0);
+    } else if (e.key === 'Enter' && autoSelected >= 0) {
+      e.preventDefault();
+      pickName(items[autoSelected].textContent);
+      return;
+    } else if (e.key === 'Escape') {
+      dropdown.classList.remove('open');
+      return;
+    }
+    items.forEach((el, i) => el.classList.toggle('selected', i === autoSelected));
+  }
+
+  function renderAll() {
+    renderSummary();
+    renderTable();
+    renderSumar();
+    renderReports();
+    renderLoans();
+    updateDatalist();
+  }
+
+  renderAll();
+
+
+  function toMonthly(amount, period) {
+    switch(period) {
+      case 'mesačne': return amount;
+      case 'ročne': return amount / 12;
+      case 'štvrťročne': return amount / 3;
+      case 'týždenne': return amount * 4.33;
+      default: return amount;
+    }
+  }
+
+  function renderCostSummary() {
+    const items = document.getElementById('cost-items');
+    const label = document.getElementById('cost-count-label');
+    if (recurrings.length === 0) {
+      items.innerHTML = '<div class="cost-empty">Pridajte pravidelné platby vyššie.</div>';
+      document.getElementById('cost-monthly').textContent = '0,00 €';
+      document.getElementById('cost-yearly').textContent = '0,00 €';
+      document.getElementById('cost-daily').textContent = '0,00 €';
+      label.textContent = '0 aktívnych platieb';
+      return;
+    }
+
+    const sorted = [...recurrings].sort((a,b) => toMonthly(b.amount, b.period) - toMonthly(a.amount, a.period));
+    let totalMonthly = 0;
+
+    items.innerHTML = sorted.map(r => {
+      const monthly = toMonthly(r.amount, r.period);
+      totalMonthly += monthly;
+      const isMonthly = r.period === 'mesačne';
+      return `
+        <div class="cost-item">
+          <div class="cost-item-left">
+            <div class="cost-dot"></div>
+            <div>
+              <span class="cost-item-name">${r.name}</span>
+              <span class="cost-item-period">${r.period}</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="cost-item-amount">${formatEur(r.amount)}</div>
+            ${!isMonthly ? `<div class="cost-item-monthly">≈ ${formatEur(monthly)} / mes.</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const yearly = totalMonthly * 12;
+    const daily = totalMonthly / 30;
+
+    document.getElementById('cost-monthly').textContent = formatEur(totalMonthly);
+    document.getElementById('cost-yearly').textContent = formatEur(yearly);
+    document.getElementById('cost-daily').textContent = formatEur(daily);
+    label.textContent = recurrings.length + ' aktívnych platieb';
+  }
+
+
+
+
+
+  // ===== PRIEČINKY =====
+  function toggleFolder(id) {
+    const body = document.getElementById(id);
+    if (!body) return;
+    body.classList.toggle('open');
+    const arrow = document.getElementById('arrow-' + id);
+    if (arrow) arrow.classList.toggle('open');
+  }
+
+  function toggleZmluva() {
+    const detail = document.getElementById('zmluva-detail');
+    const badge = document.getElementById('zmluva-badge');
+    const item = document.getElementById('zmluva-item');
+    const isOpen = detail.style.display !== 'none';
+    if (isOpen) {
+      closeZmluva();
+    } else {
+      detail.style.display = 'block';
+      badge.textContent = '▲ Zavrieť';
+    }
+  }
+
+  function closeZmluva() {
+    const detail = document.getElementById('zmluva-detail');
+    const badge = document.getElementById('zmluva-badge');
+    const item = document.getElementById('zmluva-item');
+    detail.style.display = 'none';
+    badge.textContent = '▼ Zobraziť';
+    // Scroll back to the doc item
+    item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ===== UPRAVIŤ TRANSAKCIU =====
+  let editingTxId = null;
+  let editType = 'income';
+  let editMethod = 'bank';
+
+  function setEditMethod(method) {
+    editMethod = method;
+    document.getElementById('edit-btn-bank').className = method === 'bank' ? 'active-bank' : '';
+    document.getElementById('edit-btn-cash').className = method === 'cash' ? 'active-cash' : '';
+    document.getElementById('edit-btn-personal').className = method === 'personal' ? 'active-personal' : '';
+  }
+
+  function setEditType(type) {
+    editType = type;
+    document.getElementById('edit-btn-income').className = type === 'income' ? 'active-income' : '';
+    document.getElementById('edit-btn-loan').className = type === 'loan' ? 'active-loan' : '';
+    document.getElementById('edit-btn-expense').className = type === 'expense' ? 'active-expense' : '';
+  }
+
+  function openEditModal(id) {
+    const t = transactions.find(t => t.id === id);
+    if (!t) return;
+    editingTxId = id;
+    editType = t.type;
+    setEditType(t.type);
+    setEditMethod(t.method || 'bank');
+    document.getElementById('edit-name').value = t.name;
+    document.getElementById('edit-amount').value = t.amount;
+    document.getElementById('edit-date').value = new Date(t.date).toISOString().slice(0,10);
+    document.getElementById('edit-note').value = t.note || '';
+    document.getElementById('edit-fa').value = t.fa || '';
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+    editingTxId = null;
+  }
+
+  function saveEdit() {
+    const name = document.getElementById('edit-name').value.trim();
+    const amount = parseFloat(document.getElementById('edit-amount').value);
+    const dateVal = document.getElementById('edit-date').value;
+    const note = document.getElementById('edit-note').value.trim();
+    if (!name) { showNotif('⚠ Zadajte meno'); return; }
+    if (!amount || amount <= 0) { showNotif('⚠ Zadajte sumu'); return; }
+    const idx = transactions.findIndex(t => t.id === editingTxId);
+    const dateObj = new Date(dateVal);
+    dateObj.setHours(12,0,0,0);
+    const editFa = document.getElementById('edit-fa').value.trim();
+    transactions[idx] = { ...transactions[idx], name, amount, type: editType, method: editMethod, date: dateObj.toISOString(), note, fa: editFa };
+    save();
+    renderAll();
+    closeEditModal();
+    showNotif('✓ Transakcia upravená');
+  }
+
+  document.getElementById('edit-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
+
+  // ===== PÔŽIČKY =====
+  function renderLoans() {
+    const loans = transactions.filter(t => t.type === 'loan');
+    const grid = document.getElementById('loans-grid');
+
+    const unpaid = loans.filter(t => !t.repaid);
+    const repaid = loans.filter(t => t.repaid);
+    const totalUnpaid = unpaid.reduce((s,t) => s+t.amount, 0);
+    const totalRepaid = repaid.reduce((s,t) => s+t.amount, 0);
+
+    document.getElementById('loans-total').textContent = formatEur(totalUnpaid);
+    document.getElementById('loans-repaid-total').textContent = formatEur(totalRepaid);
+    document.getElementById('loans-count').textContent = unpaid.length + ' nesplatených pôžičiek';
+
+    if (loans.length === 0) {
+      grid.innerHTML = '<div class="rec-empty">Žiadne pôžičky. Pridajte transakciu typu ⟳ Pôžička.</div>';
+      return;
+    }
+
+    const sorted = [...loans].sort((a,b) => new Date(b.date)-new Date(a.date));
+    grid.innerHTML = sorted.map(t => `
+      <div class="loan-card ${t.repaid ? 'repaid' : ''}">
+        <div class="loan-card-header">
+          <div class="loan-card-name">${t.name}</div>
+          ${t.repaid ? '<span class="loan-repaid-badge">✓ Splatená</span>' : '<span class="badge-loan">⟳ Nesplatená</span>'}
+        </div>
+        <div class="loan-amount">+${formatEur(t.amount)}</div>
+        <div class="loan-meta">Dátum pôžičky: <span>${formatDate(t.date)}</span></div>
+        ${t.repaid ? `<div class="loan-meta">Splatená: <span>${t.repaidDate ? formatDate(new Date(t.repaidDate).toISOString()) : '—'}</span></div>` : ''}
+        ${t.note ? `<div class="loan-meta">Poznámka: <span>${t.note}</span></div>` : ''}
+        <div class="loan-actions no-print">
+          <button class="btn-repay" onclick="repayLoan(${t.id})" ${t.repaid ? 'disabled' : ''}>
+            ${t.repaid ? '✓ Splatená' : '✓ Označiť ako splatená'}
+          </button>
+          <button class="btn-rec-delete" onclick="deleteLoanTx(${t.id})">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function repayLoan(id) {
+    if (!confirm('Označiť pôžičku ako splatená?')) return;
+    const idx = transactions.findIndex(t => t.id === id);
+    transactions[idx].repaid = true;
+    transactions[idx].repaidDate = new Date().toISOString();
+    save();
+    renderAll();
+    renderLoans();
+    showNotif('✓ Pôžička označená ako splatená');
+  }
+
+  function deleteLoanTx(id) {
+    if (!confirm('Zmazať túto pôžičku?')) return;
+    transactions = transactions.filter(t => t.id !== id);
+    save();
+    renderAll();
+    renderLoans();
+    showNotif('Pôžička vymazaná');
+  }
+
+  // ===== ZOZNAM NA ZAPLATENIE =====
+  let todos = JSON.parse(localStorage.getItem('lexaTodos') || '[]');
+
+  function saveTodos() { localStorage.setItem('lexaTodos', JSON.stringify(todos)); }
+
+  function openTodoModal() {
+    document.getElementById('todo-name').value = '';
+    document.getElementById('todo-amount').value = '';
+    document.getElementById('todo-due').value = '';
+    document.getElementById('todo-note').value = '';
+    document.getElementById('todo-modal').classList.add('open');
+  }
+
+  function closeTodoModal() { document.getElementById('todo-modal').classList.remove('open'); }
+
+  function saveTodo() {
+    const name = document.getElementById('todo-name').value.trim();
+    const amount = parseFloat(document.getElementById('todo-amount').value);
+    const due = document.getElementById('todo-due').value;
+    const note = document.getElementById('todo-note').value.trim();
+    if (!name) { showNotif('⚠ Zadajte názov'); return; }
+    if (!amount || amount <= 0) { showNotif('⚠ Zadajte sumu'); return; }
+    todos.push({ id: Date.now(), name, amount, due, note });
+    saveTodos();
+    renderTodos();
+    closeTodoModal();
+    showNotif('✓ Pridané na zoznam');
+  }
+
+  function payTodo(id) {
+    const t = todos.find(t => t.id === id);
+    const note = [t.note, 'zo zoznamu'].filter(Boolean).join(' | ');
+    transactions.unshift({ id: Date.now(), date: new Date().toISOString(), name: t.name, type: 'expense', amount: t.amount, note });
+    todos = todos.filter(t => t.id !== id);
+    save();
+    saveTodos();
+    renderAll();
+    renderTodos();
+    showNotif('✓ Zaplatené a zapísané!');
+  }
+
+  function deleteTodo(id) {
+    if (!confirm('Zmazať zo zoznamu?')) return;
+    todos = todos.filter(t => t.id !== id);
+    saveTodos();
+    renderTodos();
+    showNotif('Položka vymazaná');
+  }
+
+  function renderTodos() {
+    const list = document.getElementById('todo-list');
+    const total = todos.reduce((s,t) => s+t.amount, 0);
+    document.getElementById('todo-total').textContent = formatEur(total);
+    document.getElementById('todo-count').textContent = todos.length + ' položiek čaká na zaplatenie';
+
+    if (todos.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Žiadne položky na zaplatenie.</p></div>';
+      return;
+    }
+
+    const today = new Date();
+    const sorted = [...todos].sort((a,b) => {
+      if (!a.due) return 1;
+      if (!b.due) return -1;
+      return new Date(a.due) - new Date(b.due);
+    });
+
+    list.innerHTML = sorted.map(t => {
+      const due = t.due ? new Date(t.due) : null;
+      const diffDays = due ? Math.ceil((due - today) / (1000*60*60*24)) : null;
+      let dueHtml = '';
+      if (due) {
+        const isWarn = diffDays <= 3;
+        dueHtml = `<div class="todo-item-due ${isWarn ? 'due-warn' : 'due-ok'}">
+          ${isWarn ? '⚠ ' : ''}Termín: ${due.toLocaleDateString('sk-SK')}${diffDays < 0 ? ' (po termíne!)' : diffDays === 0 ? ' (dnes!)' : ` (za ${diffDays} dní)`}
+        </div>`;
+      }
+      return `
+        <div class="todo-item">
+          <div class="todo-item-main">
+            <div class="todo-item-name">${t.name}</div>
+            ${t.note ? `<div class="todo-item-meta">${t.note}</div>` : ''}
+            ${dueHtml}
+          </div>
+          <div class="todo-item-amount">-${formatEur(t.amount)}</div>
+          <div class="todo-actions no-print">
+            <button class="btn-todo-pay" onclick="payTodo(${t.id})">✓ Zaplatené</button>
+            <button class="btn-todo-delete" onclick="deleteTodo(${t.id})">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('todo-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeTodoModal();
+  });
+
+  renderTodos();
+
+  // ===== PRAVIDELNÉ PLATBY =====
+  let recurrings = JSON.parse(localStorage.getItem('lexaRecurrings') || '[]');
+  let editingRecId = null;
+
+  function saveRecData() { localStorage.setItem('lexaRecurrings', JSON.stringify(recurrings)); }
+
+  function openRecModal(id) {
+    editingRecId = id || null;
+    document.getElementById('modal-title').textContent = id ? 'Upraviť Pravidelnú Platbu' : 'Nová Pravidelná Platba';
+    if (id) {
+      const r = recurrings.find(r => r.id === id);
+      document.getElementById('rec-name').value = r.name;
+      document.getElementById('rec-amount').value = r.amount;
+      document.getElementById('rec-period').value = r.period;
+      document.getElementById('rec-date').value = r.date;
+      document.getElementById('rec-vs').value = r.vs || '';
+      document.getElementById('rec-note').value = r.note || '';
+    } else {
+      document.getElementById('rec-name').value = '';
+      document.getElementById('rec-amount').value = '';
+      document.getElementById('rec-period').value = 'mesačne';
+      document.getElementById('rec-date').value = '';
+      document.getElementById('rec-vs').value = '';
+      document.getElementById('rec-note').value = '';
+    }
+    document.getElementById('rec-modal').classList.add('open');
+  }
+
+  function closeRecModal() { document.getElementById('rec-modal').classList.remove('open'); }
+
+  function saveRec() {
+    const name = document.getElementById('rec-name').value.trim();
+    const amount = parseFloat(document.getElementById('rec-amount').value);
+    const period = document.getElementById('rec-period').value;
+    const date = document.getElementById('rec-date').value;
+    const vs = document.getElementById('rec-vs').value.trim();
+    const note = document.getElementById('rec-note').value.trim();
+    if (!name) { showNotif('⚠ Zadajte názov'); return; }
+    if (!amount || amount <= 0) { showNotif('⚠ Zadajte sumu'); return; }
+    if (!date) { showNotif('⚠ Zadajte dátum'); return; }
+    if (editingRecId) {
+      const idx = recurrings.findIndex(r => r.id === editingRecId);
+      recurrings[idx] = { ...recurrings[idx], name, amount, period, date, vs, note };
+    } else {
+      recurrings.push({ id: Date.now(), name, amount, period, date, vs, note });
+    }
+    saveRecData();
+    renderRecurrings();
+    renderCostSummary();
+    closeRecModal();
+    showNotif(editingRecId ? '✓ Platba upravená' : '✓ Platba pridaná');
+  }
+
+  function deleteRec(id) {
+    if (!confirm('Zmazať túto pravidelnú platbu?')) return;
+    recurrings = recurrings.filter(r => r.id !== id);
+    saveRecData();
+    renderRecurrings();
+    renderCostSummary();
+    showNotif('Platba vymazaná');
+  }
+
+  function payNow(id) {
+    const r = recurrings.find(r => r.id === id);
+    const note = [r.note, r.vs ? 'VS: ' + r.vs : ''].filter(Boolean).join(' | ');
+    transactions.unshift({ id: Date.now(), date: new Date().toISOString(), name: r.name, type: 'expense', amount: r.amount, note });
+    save();
+    renderAll();
+    showNotif('✓ Zaplatené a zapísané do peňaženky');
+  }
+
+  function renderRecurrings() {
+    const grid = document.getElementById('recurring-grid');
+    if (recurrings.length === 0) {
+      grid.innerHTML = '<div class="rec-empty">Zatiaľ žiadne pravidelné platby. Kliknite na + Pridať.</div>';
+      return;
+    }
+    const today = new Date();
+    grid.innerHTML = recurrings.map(r => {
+      const due = new Date(r.date);
+      const diffDays = Math.ceil((due - today) / (1000*60*60*24));
+      const isDue = diffDays <= 7;
+      const dueLabel = diffDays < 0 ? `⚠ Po splatnosti ${Math.abs(diffDays)} dní` : diffDays === 0 ? '⚠ Dnes!' : diffDays <= 7 ? `Za ${diffDays} dní` : due.toLocaleDateString('sk-SK');
+      return `
+        <div class="rec-card ${isDue ? 'due-soon' : ''}">
+          <div class="rec-card-header">
+            <div class="rec-card-name">${r.name}</div>
+            <span class="rec-badge ${isDue ? 'due' : ''}">${r.period}</span>
+          </div>
+          <div class="rec-amount">-${formatEur(r.amount)}</div>
+          ${r.vs ? `<div class="rec-meta">VS: <span>${r.vs}</span></div>` : ''}
+          <div class="rec-meta">Ďalšia platba: <span style="color:${isDue ? 'var(--expense-color)' : 'var(--black)'}">${dueLabel}</span></div>
+          ${r.note ? `<div class="rec-meta">Poznámka: <span>${r.note}</span></div>` : ''}
+          <div class="rec-actions">
+            <button class="btn-pay-now" onclick="payNow(${r.id})">▼ Zaplatiť teraz</button>
+            <button class="btn-rec-edit" onclick="openRecModal(${r.id})">✎ Upraviť</button>
+            <button class="btn-rec-delete" onclick="deleteRec(${r.id})">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('rec-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeRecModal();
+  });
+
+
+  // ===== EXPORT / IMPORT =====
+  function exportData() {
+    const data = { transactions, recurrings, todos, exported: new Date().toISOString() };
+    const json = JSON.stringify(data);
+    document.getElementById('import-textarea').value = json;
+    document.getElementById('import-modal').classList.add('open');
+    document.getElementById('import-modal-title').textContent = 'Export Dát';
+    document.getElementById('import-btn').style.display = 'none';
+    document.getElementById('copy-btn').style.display = 'inline-block';
+    setTimeout(() => {
+      const ta = document.getElementById('import-textarea');
+      ta.select();
+      ta.setSelectionRange(0, 99999);
+    }, 100);
+  }
+
+  function copyExport() {
+    const ta = document.getElementById('import-textarea');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    try {
+      navigator.clipboard.writeText(ta.value).then(() => showNotif('✓ Skopírované!'));
+    } catch(e) {
+      document.execCommand('copy');
+      showNotif('✓ Skopírované!');
+    }
+  }
+
+  function openImport() {
+    document.getElementById('import-textarea').value = '';
+    document.getElementById('import-modal').classList.add('open');
+    document.getElementById('import-modal-title').textContent = 'Import Dát';
+    document.getElementById('import-btn').style.display = 'inline-block';
+    document.getElementById('copy-btn').style.display = 'none';
+  }
+
+  function closeImport() {
+    document.getElementById('import-modal').classList.remove('open');
+  }
+
+  function importData() {
+    const raw = document.getElementById('import-textarea').value.trim();
+    if (!raw) { showNotif('⚠ Vlož kód exportu'); return; }
+    try {
+      const data = JSON.parse(raw);
+      if (data.transactions) {
+        transactions = data.transactions;
+        localStorage.setItem('lexaTransactions', JSON.stringify(transactions));
+      }
+      if (data.recurrings) {
+        recurrings = data.recurrings;
+        localStorage.setItem('lexaRecurrings', JSON.stringify(recurrings));
+      }
+      if (data.todos) {
+        todos = data.todos;
+        localStorage.setItem('lexaTodos', JSON.stringify(todos));
+      }
+      renderAll();
+      renderLoans();
+      renderTodos();
+      renderRecurrings();
+      renderCostSummary();
+      updateDatalist();
+      closeImport();
+      showNotif('✓ Dáta importované!');
+    } catch(e) {
+      showNotif('⚠ Neplatný kód – skontroluj export');
+    }
+  }
+
+  document.getElementById('import-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeImport();
+  });
+
+  // ===== INICIALIZÁCIA =====
+  // Nastav dnešný dátum ako default
+  const todayStr = new Date().toISOString().slice(0,10);
+  document.getElementById('input-date').value = todayStr;
+
+  renderAll();
+  renderLoans();
+  renderTodos();
+  renderRecurrings();
+  renderCostSummary();
+  updateDatalist();
+
+</script>
+</body>
+</html>
